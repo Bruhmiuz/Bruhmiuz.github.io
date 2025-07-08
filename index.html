@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MCQ Quiz</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .question { margin-bottom: 20px; }
+    .choice { margin: 5px 0; }
+    #result { margin-top: 15px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="question">
+    <h3>What is the capital of Japan?</h3>
+    <form id="quizForm">
+      <label class="choice"><input type="radio" name="q" value="a"> Tokyo</label><br>
+      <label class="choice"><input type="radio" name="q" value="b"> Beijing</label><br>
+      <label class="choice"><input type="radio" name="q" value="c"> Seoul</label><br>
+      <button type="submit">Submit</button>
+    </form>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById("quizForm");
+    const result = document.getElementById("result");
+    form.addEventListener("submit", function(event) {
+      event.preventDefault();
+      const answer = form.q.value;
+      if (answer === "a") {
+        result.textContent = "✅ Correct!";
+      } else {
+        result.textContent = "❌ Incorrect. Try again.";
+      }
+    });
+  </script>
+</body>
+</html>
