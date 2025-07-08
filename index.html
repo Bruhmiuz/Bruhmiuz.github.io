@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MCQ Embed</title>
+  <title>MCQ with Feedback</title>
   <style>
     :root {
-      --main-bg: #f8f9fa;
+      --main-bg: #f9fafb;
       --card-bg: #ffffff;
-      --accent: #4f46e5;
-      --text-color: #333;
-      --hover-bg: #eef2ff;
+      --accent: #2563eb;
+      --text-color: #1f2937;
+      --hover-bg: #e0edff;
       --border-radius: 10px;
+      --correct: #16a34a;
+      --incorrect: #dc2626;
     }
 
     body {
@@ -21,17 +23,17 @@
     }
 
     .mcq-card {
-      max-width: 500px;
+      max-width: 520px;
       background: var(--card-bg);
       border-radius: var(--border-radius);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       padding: 1.5rem;
       margin: 2rem auto;
-      box-sizing: border-box;
     }
 
     .mcq-question {
       font-size: 1.2rem;
+      font-weight: 600;
       margin-bottom: 1rem;
       color: var(--text-color);
     }
@@ -46,19 +48,18 @@
       margin-bottom: 0.75rem;
     }
 
+    .mcq-options input[type="radio"] {
+      display: none;
+    }
+
     .mcq-options label {
-      display: flex;
-      align-items: center;
+      display: block;
       padding: 0.75rem 1rem;
-      border: 2px solid #ddd;
+      border: 2px solid #e5e7eb;
       border-radius: 8px;
       background-color: #fff;
       cursor: pointer;
       transition: all 0.2s ease;
-    }
-
-    .mcq-options input[type="radio"] {
-      display: none;
     }
 
     .mcq-options input[type="radio"]:checked + label {
@@ -83,7 +84,27 @@
     }
 
     .submit-btn:hover {
-      background-color: #3730a3;
+      background-color: #1d4ed8;
+    }
+
+    .response-box {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      font-weight: 500;
+      display: none;
+    }
+
+    .response-box.correct {
+      background-color: #dcfce7;
+      color: var(--correct);
+      border: 1px solid var(--correct);
+    }
+
+    .response-box.incorrect {
+      background-color: #fee2e2;
+      color: var(--incorrect);
+      border: 1px solid var(--incorrect);
     }
   </style>
 </head>
@@ -92,25 +113,57 @@
     <div class="mcq-question">
       What is the capital of France?
     </div>
-    <form class="mcq-options">
-      <li>
-        <input type="radio" id="option1" name="question" value="A">
-        <label for="option1">A) Berlin</label>
-      </li>
-      <li>
-        <input type="radio" id="option2" name="question" value="B">
-        <label for="option2">B) Madrid</label>
-      </li>
-      <li>
-        <input type="radio" id="option3" name="question" value="C">
-        <label for="option3">C) Paris</label>
-      </li>
-      <li>
-        <input type="radio" id="option4" name="question" value="D">
-        <label for="option4">D) Rome</label>
-      </li>
+    <form id="mcqForm">
+      <ul class="mcq-options">
+        <li>
+          <input type="radio" id="option1" name="question" value="A">
+          <label for="option1">A) Berlin</label>
+        </li>
+        <li>
+          <input type="radio" id="option2" name="question" value="B">
+          <label for="option2">B) Madrid</label>
+        </li>
+        <li>
+          <input type="radio" id="option3" name="question" value="C">
+          <label for="option3">C) Paris</label>
+        </li>
+        <li>
+          <input type="radio" id="option4" name="question" value="D">
+          <label for="option4">D) Rome</label>
+        </li>
+      </ul>
       <button type="submit" class="submit-btn">Submit</button>
     </form>
+
+    <div id="responseBox" class="response-box"></div>
   </div>
+
+  <script>
+    document.getElementById('mcqForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const selected = document.querySelector('input[name="question"]:checked');
+      const responseBox = document.getElementById('responseBox');
+
+      if (!selected) {
+        responseBox.style.display = 'block';
+        responseBox.textContent = "Please select an option.";
+        responseBox.className = "response-box incorrect";
+        return;
+      }
+
+      const correctAnswer = "C";
+
+      if (selected.value === correctAnswer) {
+        responseBox.style.display = 'block';
+        responseBox.textContent = "✅ Correct! Paris is the capital of France.";
+        responseBox.className = "response-box correct";
+      } else {
+        responseBox.style.display = 'block';
+        responseBox.textContent = "❌ Incorrect. The correct answer is Paris.";
+        responseBox.className = "response-box incorrect";
+      }
+    });
+  </script>
 </body>
 </html>
