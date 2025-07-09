@@ -1,169 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MCQ with Feedback</title>
+  <meta charset="UTF-8">
+  <title>Interactive Quiz</title>
   <style>
-    :root {
-      --main-bg: #f9fafb;
-      --card-bg: #ffffff;
-      --accent: #2563eb;
-      --text-color: #1f2937;
-      --hover-bg: #e0edff;
-      --border-radius: 10px;
-      --correct: #16a34a;
-      --incorrect: #dc2626;
-    }
-
     body {
-      margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--main-bg);
+      font-family: "Segoe UI", sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f4f6f9;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
     }
 
-    .mcq-card {
-      max-width: 520px;
-      background: var(--card-bg);
-      border-radius: var(--border-radius);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      padding: 1.5rem;
-      margin: 2rem auto;
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
     }
 
-    .mcq-question {
-      font-size: 1.2rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-      color: var(--text-color);
-    }
-
-    .mcq-options {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    .mcq-options li {
-      margin-bottom: 0.75rem;
-    }
-
-    .mcq-options input[type="radio"] {
-      display: none;
-    }
-
-    .mcq-options label {
-      display: block;
-      padding: 0.75rem 1rem;
-      border: 2px solid #e5e7eb;
+    .question {
+      margin-bottom: 30px;
+      background: #fff;
+      padding: 20px;
       border-radius: 8px;
-      background-color: #fff;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
 
-    .mcq-options input[type="radio"]:checked + label {
-      border-color: var(--accent);
-      background-color: var(--hover-bg);
+    .question h3 {
+      margin-bottom: 15px;
+      color: #444;
     }
 
-    .mcq-options label:hover {
-      background-color: #f0f4ff;
+    .choice {
+      margin: 8px 0;
     }
 
-    .submit-btn {
-      margin-top: 1rem;
-      padding: 0.7rem 1.2rem;
-      background-color: var(--accent);
+    .choice input {
+      margin-right: 10px;
+    }
+
+    button {
+      padding: 10px 18px;
+      font-size: 16px;
+      background-color: #0066cc;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 1rem;
-      transition: background-color 0.3s;
     }
 
-    .submit-btn:hover {
-      background-color: #1d4ed8;
+    button:hover {
+      background-color: #004c99;
     }
 
-    .response-box {
-      margin-top: 1rem;
-      padding: 1rem;
-      border-radius: 8px;
-      font-weight: 500;
+    #result {
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    #restart {
       display: none;
-    }
-
-    .response-box.correct {
-      background-color: #dcfce7;
-      color: var(--correct);
-      border: 1px solid var(--correct);
-    }
-
-    .response-box.incorrect {
-      background-color: #fee2e2;
-      color: var(--incorrect);
-      border: 1px solid var(--incorrect);
+      margin: 20px auto;
+      background-color: #ccc;
     }
   </style>
 </head>
 <body>
-  <div class="mcq-card">
-    <div class="mcq-question">
-      What is the capital of France?
-    </div>
-    <form id="mcqForm">
-      <ul class="mcq-options">
-        <li>
-          <input type="radio" id="option1" name="question" value="A">
-          <label for="option1">A) Berlin</label>
-        </li>
-        <li>
-          <input type="radio" id="option2" name="question" value="B">
-          <label for="option2">B) Madrid</label>
-        </li>
-        <li>
-          <input type="radio" id="option3" name="question" value="C">
-          <label for="option3">C) Paris</label>
-        </li>
-        <li>
-          <input type="radio" id="option4" name="question" value="D">
-          <label for="option4">D) Rome</label>
-        </li>
-      </ul>
-      <button type="submit" class="submit-btn">Submit</button>
-    </form>
 
-    <div id="responseBox" class="response-box"></div>
+<h1>General Knowledge Quiz</h1>
+<form id="quizForm">
+
+  <div class="question">
+    <h3>1. What is the capital of France?</h3>
+    <label class="choice"><input type="radio" name="q1" value="a"> Berlin</label><br>
+    <label class="choice"><input type="radio" name="q1" value="b"> Madrid</label><br>
+    <label class="choice"><input type="radio" name="q1" value="c"> Paris</label><br>
+    <label class="choice"><input type="radio" name="q1" value="d"> Rome</label><br>
   </div>
 
-  <script>
-    document.getElementById('mcqForm').addEventListener('submit', function(event) {
-      event.preventDefault();
+  <div class="question">
+    <h3>2. Who wrote 'Hamlet'?</h3>
+    <label class="choice"><input type="radio" name="q2" value="a"> Charles Dickens</label><br>
+    <label class="choice"><input type="radio" name="q2" value="b"> William Shakespeare</label><br>
+    <label class="choice"><input type="radio" name="q2" value="c"> Jane Austen</label><br>
+    <label class="choice"><input type="radio" name="q2" value="d"> Mark Twain</label><br>
+  </div>
 
-      const selected = document.querySelector('input[name="question"]:checked');
-      const responseBox = document.getElementById('responseBox');
+  <div class="question">
+    <h3>3. Which gas do plants absorb?</h3>
+    <label class="choice"><input type="radio" name="q3" value="a"> Oxygen</label><br>
+    <label class="choice"><input type="radio" name="q3" value="b"> Hydrogen</label><br>
+    <label class="choice"><input type="radio" name="q3" value="c"> Nitrogen</label><br>
+    <label class="choice"><input type="radio" name="q3" value="d"> Carbon Dioxide</label><br>
+  </div>
 
-      if (!selected) {
-        responseBox.style.display = 'block';
-        responseBox.textContent = "Please select an option.";
-        responseBox.className = "response-box incorrect";
-        return;
+  <div style="text-align:center;">
+    <button type="submit">Submit Answers</button>
+    <button type="button" id="restart">Restart Quiz</button>
+  </div>
+</form>
+
+<div id="result"></div>
+
+<script>
+  const form = document.getElementById("quizForm");
+  const result = document.getElementById("result");
+  const restartBtn = document.getElementById("restart");
+
+  const correctAnswers = {
+    q1: "c",
+    q2: "b",
+    q3: "d"
+  };
+
+  form.addEventListener("submit", function(event) {
+    event.preventDefault();
+    let score = 0;
+    let total = Object.keys(correctAnswers).length;
+
+    for (let key in correctAnswers) {
+      const selected = form.elements[key].value;
+      if (selected === correctAnswers[key]) {
+        score++;
       }
+    }
 
-      const correctAnswer = "C";
+    result.textContent = `You scored ${score} out of ${total}!`;
+    restartBtn.style.display = "inline-block";
+  });
 
-      if (selected.value === correctAnswer) {
-        responseBox.style.display = 'block';
-        responseBox.textContent = "✅ Correct! Paris is the capital of France.";
-        responseBox.className = "response-box correct";
-      } else {
-        responseBox.style.display = 'block';
-        responseBox.textContent = "❌ Incorrect. The correct answer is Paris.";
-        responseBox.className = "response-box incorrect";
-      }
-    });
-  </script>
+  restartBtn.addEventListener("click", function() {
+    form.reset();
+    result.textContent = "";
+    restartBtn.style.display = "none";
+  });
+</script>
+
 </body>
 </html>
