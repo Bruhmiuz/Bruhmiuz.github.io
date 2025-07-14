@@ -3,7 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Chat Quiz Bot</title>
+  <title>QuizBot</title>
+
+  <!-- KaTeX for LaTeX rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '\\(', right: '\\)', display: false }] });">
+  </script>
+
   <style>
     body {
       font-family: "Segoe UI", sans-serif;
@@ -16,7 +24,7 @@
       width: 100%;
       max-width: 800px;
       margin: 0 auto;
-      height: 100%;
+      height: 100vh;
       background: #fdfdfd;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -72,9 +80,10 @@
       padding: 14px 20px;
       border-radius: 20px;
       background: #e8e8e8;
-      font-size: 18px;
+      font-size: 16px;
       max-width: 80%;
       line-height: 1.5;
+      transition: background-color 0.4s ease, color 0.4s ease;
     }
 
     .bot .bubble {
@@ -85,24 +94,22 @@
       background: #e4e8ec;
     }
 
+    .bubble.selected {
+      background: #c2c2c2; 
+    }
+
     .bubble.correct {
-      background: #4caf50 !important;
+      background: #4caf50;
       color: white;
     }
 
     .bubble.incorrect {
-      background: #f44336 !important;
+      background: #f44336;
       color: white;
     }
 
     .bubble.missed {
-      background: #cce5cc !important;
-      color: black;
-    }
-
-    .bubble.unselected {
-      background: #f5f5f5 !important;
-      color: black;
+      background: #cce5cc;
     }
 
     .mcq-response {
@@ -126,38 +133,57 @@
       background: #fafafa;
       flex-direction: column;
       gap: 12px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.4s ease;
+    }
+
+    .chat-input.show {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0);
     }
 
     #textInputArea {
-      display: none;
       flex-direction: row;
       gap: 12px;
       align-items: center;
+      display: flex;
     }
 
     #mcqInputArea {
-      display: none;
       flex-direction: column;
       gap: 12px;
+      display: flex;
+    }
+
+    .chat-input-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
     }
 
     .chat-input input[type="text"] {
       flex: 1;
-      padding: 14px 18px;
-      border-radius: 24px;
+      padding: 14px 18px; /* MATCH HEIGHT */
+      border-radius: 20px;
       border: 1px solid #ccc;
-      font-size: 18px;
+      font-size: 16px;
+      background: #e4e8ec;
+      height: 48px; /* MATCH button */
+      box-sizing: border-box;
     }
 
     .chat-input button {
-      padding: 14px 22px;
+      padding: 0 22px;
       background: #007bff;
       color: white;
       border: none;
       border-radius: 24px;
       cursor: pointer;
       font-size: 16px;
-      white-space: nowrap;
+      height: 48px; /* MATCH input */
     }
 
     .chat-input button:hover {
@@ -176,7 +202,7 @@
       border-radius: 16px;
       border: 1px solid #b3d1ef;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.3s;
       font-size: 18px;
     }
 
@@ -184,14 +210,22 @@
       background: #e4e8ec;
       color: #000;
     }
+
+    .system-message {
+      text-align: center;
+      font-size: 14px;
+      color: #777;
+      margin: 8px auto;
+      padding: 4px 8px;
+    }
   </style>
 </head>
 <body>
   <div class="chat-container">
-    <div class="chat-header">QuizBot Chat</div>
+    <div class="chat-header">Kerfus (QuizBot)</div>
     <div class="chat-box" id="chatBox"></div>
     <div class="chat-input" id="chatInput">
-      <div id="textInputArea">
+      <div id="textInputArea" class="chat-input-row">
         <input type="text" id="userText" placeholder="Type your answer..." />
         <button onclick="submitTextAnswer()">Send</button>
       </div>
@@ -210,58 +244,80 @@
     const mcqInputArea = document.getElementById('mcqInputArea');
     const mcqOptionsContainer = document.getElementById('mcqOptions');
 
-    const botAvatar = "images/bellabot.png";
+    const botAvatar = "images/bellabot.png"; // Fallback avatar
 
-    const questions = [
-      {
+    const questions = {
+      start: {
+        id: "start",
         type: "dialogue",
-        question: "Are you ready to start?",
-        options: ["Sure!", "Let me clarify my doubts"],
+        question: "System initialized. Would you like to start the logic sequence?",
+        options: ["Yes", "Give me details first"],
         responses: {
-          "Sure!": () => { currentQuestion++; askNextQuestion(); },
-          "Let me clarify my doubts": () => {
-            addMessage("Here's some background: This quiz covers basic math (e.g., addition) and planetary facts (e.g., Mars is the Red Planet due to its iron-rich dust). Ready now?", 'bot');
-            setTimeout(() => {
-              currentQuestion = 0; // Restart dialogue
-              askNextQuestion();
-            }, 2000);
-          }
+          "Yes": "q1",
+          "Give me details first": "info"
         }
       },
-      { type: "text", question: "What's 2 + 2?", answer: "4" },
-      {
+      info: {
+        id: "info",
+        type: "dialogue",
+        question: "This simulation tests reasoning and response handling. Ready to proceed?",
+        options: ["Let’s begin", "Back"],
+        responses: {
+          "Let’s begin": "q1",
+          "Back": "start"
+        }
+      },
+      q1: {
+        id: "q1",
+        type: "text",
+        question: "Solve: \\( 3x + 6 = 15 \\). What is \\( x \\)?",
+        answer: "3",
+        marks: 1,
+        next: "q2"
+      },
+      q2: {
+        id: "q2",
         type: "mcq",
         question: "Select all prime numbers:",
-        options: ["2", "3", "4", "5"],
-        answer: ["2", "3", "5"]
+        options: ["2", "4", "5", "6"],
+        answer: ["2", "5"],
+        marks: 2,
+        next: "q3"
       },
-      {
+      q3: {
+        id: "q3",
         type: "single",
-        question: "Which planet is known as the Red Planet?",
-        options: ["Earth", "Mars", "Jupiter", "Venus"],
-        answer: ["Mars"]
+        question: "Which planet is not known as the Red Planet?",
+        options: ["Earth", "Mars", "Saturn"],
+        answer: ["Earth", "Saturn"],
+        marks: 1,
+        next: "end"
+      },
+      end: {
+        id: "end",
+        type: "end",
+        message: () => `✅ Session complete. Final score: ${score}/${scoreTotal}`
       }
-    ];
+    };
 
-    let currentQuestion = 0;
+    let currentNode = "start";
     let score = 0;
+    let scoreTotal = 0;
     let lastSender = null;
 
     function addMessage(content, sender = 'bot', styleClass = '') {
       const msgWrapper = document.createElement('div');
       msgWrapper.className = `message ${sender}`;
-
       const avatar = document.createElement('img');
       avatar.className = 'avatar';
       avatar.src = botAvatar;
 
-      if (sender === 'bot' && lastSender === 'bot') {
-        avatar.classList.add('hidden');
-      }
+      if (sender === 'bot' && lastSender === 'bot') avatar.classList.add('hidden');
 
       const msgContent = document.createElement('div');
       msgContent.className = `bubble ${styleClass}`;
-      msgContent.innerText = content;
+      msgContent.innerHTML = content;
+      renderMathInElement(msgContent);
 
       if (sender === 'bot') msgWrapper.appendChild(avatar);
       msgWrapper.appendChild(msgContent);
@@ -269,35 +325,52 @@
       chatBox.appendChild(msgWrapper);
       chatBox.scrollTop = chatBox.scrollHeight;
       lastSender = sender;
-
       return msgContent;
     }
 
-    function askNextQuestion() {
+    function addSystemMessage(msg) {
+      const div = document.createElement("div");
+      div.className = "system-message";
+      div.textContent = msg;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function showInput(type) {
+      chatInput.classList.remove('show');
+      setTimeout(() => {
+        chatInput.style.display = 'flex';
+        textInputArea.style.display = type === 'text' ? 'flex' : 'none';
+        mcqInputArea.style.display = type !== 'text' ? 'flex' : 'none';
+        chatInput.classList.add('show');
+        if (type === 'text') userText.focus();
+      }, 100);
+    }
+
+    function renderQuestion(nodeId) {
       chatInput.style.display = "none";
-      textInputArea.style.display = "none";
-      mcqInputArea.style.display = "none";
-
-      if (currentQuestion < questions.length) {
-        const q = questions[currentQuestion];
-        setTimeout(() => {
-          addMessage(q.question, 'bot');
-
-          if (q.type === "text") {
-            chatInput.style.display = "flex";
-            textInputArea.style.display = "flex";
-            userText.focus();
-          } else if (q.type === "mcq" || q.type === "single" || q.type === "dialogue") {
-            chatInput.style.display = "flex";
-            mcqInputArea.style.display = "flex";
-            renderMCQOptions(q.options, q.type);
-          }
-        }, 800);
-      } else {
-        setTimeout(() => {
-          addMessage(`🎉 Quiz complete! Your score: ${score} / ${questions.length - 1}`, 'bot');
-        }, 800);
+      const node = questions[nodeId];
+      currentNode = nodeId;
+      if (!node) return;
+      if (node.type === "end") {
+        setTimeout(() => addMessage(node.message(), 'bot'), 500);
+        return;
       }
+
+      setTimeout(() => {
+        addMessage(node.question, 'bot');
+        if (node.type === "text") {
+          scoreTotal += node.marks;
+          showInput('text');
+        } else if (node.type === "mcq" || node.type === "single") {
+          scoreTotal += node.marks;
+          renderMCQOptions(node.options, node.type);
+          showInput('mcq');
+        } else if (node.type === "dialogue") {
+          renderMCQOptions(node.options, "dialogue");
+          showInput('mcq');
+        }
+      }, 500);
     }
 
     function renderMCQOptions(options, type) {
@@ -323,105 +396,114 @@
     function submitTextAnswer() {
       const answer = userText.value.trim();
       if (!answer) return;
-
       const userBubble = addMessage(answer, 'user');
       userText.value = "";
-
-      const correctAnswer = questions[currentQuestion].answer;
-
+      const node = questions[currentNode];
       setTimeout(() => {
-        chatInput.style.display = "none";
-        textInputArea.style.display = "none";
-        if (answer.toLowerCase() === correctAnswer.toLowerCase()) {
+        if (answer.toLowerCase() === node.answer.toLowerCase()) {
           userBubble.classList.add("correct");
-          score++;
+          thisScore = node.marks;
         } else {
+          thisScore = 0;
           userBubble.classList.add("incorrect");
         }
-
-        currentQuestion++;
-        askNextQuestion();
-      }, 600);
+        score += thisScore;
+        addSystemMessage(`📊 Score: ${thisScore}/${node.marks}`);
+        renderQuestion(node.next);
+      }, 400);
     }
 
     function submitMCQAnswer() {
       const selectedEls = Array.from(document.querySelectorAll('.option-item.selected'));
-      if (selectedEls.length === 0) return;
-
+      if (!selectedEls.length) return;
+      lastSender = 'user';
       const selected = selectedEls.map(el => el.textContent.trim());
-      const q = questions[currentQuestion];
+      const node = questions[currentNode];
 
-      // Show user-side response
+      if (node.type === "dialogue") {
+        addMessage(selected[0], 'user');
+        return renderQuestion(node.responses[selected[0]]);
+      }
+
       const userMessage = document.createElement("div");
       userMessage.className = "message user";
       const row = document.createElement("div");
       row.className = "mcq-response";
-
-      if (q.type === "dialogue") {
-        // Show only the selected option for dialogue
-        selected.forEach(opt => {
-          const bubble = document.createElement("div");
-          bubble.className = "bubble";
-          bubble.textContent = opt;
-          row.appendChild(bubble);
-        });
-      } else {
-        // Show all options for mcq and single questions
-        q.options.forEach(opt => {
-          const bubble = document.createElement("div");
-          bubble.className = "bubble";
-          bubble.textContent = opt;
-          row.appendChild(bubble);
-        });
-      }
-
+      node.options.forEach(opt => {
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+        bubble.textContent = opt;
+        row.appendChild(bubble);
+      });
       userMessage.appendChild(row);
       chatBox.appendChild(userMessage);
       chatBox.scrollTop = chatBox.scrollHeight;
 
-      // Handle dialogue or quiz response
       setTimeout(() => {
-        chatInput.style.display = "none";
-        mcqInputArea.style.display = "none";
-
-        if (q.type === "dialogue") {
-          const responseHandler = q.responses[selected[0]];
-          if (responseHandler) {
-            responseHandler();
+        row.childNodes.forEach(bubble => {
+          bubble.classList.add("bubble"); // ensure class exists
+          const opt = bubble.textContent.trim();
+          if (selected.includes(opt)) {
+            bubble.classList.add("selected"); // visual feedback before reveal
           }
-        } else {
-          const correctAnswers = q.answer;
+        });
+
+        // Delay reveal transition
+        setTimeout(() => {
           row.childNodes.forEach(bubble => {
             const opt = bubble.textContent.trim();
             const isSelected = selected.includes(opt);
-            const isCorrect = correctAnswers.includes(opt);
-
-            if (isSelected && isCorrect) bubble.classList.add("correct");
-            else if (isSelected && !isCorrect) bubble.classList.add("incorrect");
-            else if (!isSelected && isCorrect) bubble.classList.add("missed");
-            else bubble.classList.add("unselected");
+            const isCorrect = node.answer.includes(opt);
+          
+            // Transition logic
+            if (isSelected && isCorrect) {
+              bubble.classList.remove("selected");
+              bubble.classList.add("correct");
+            } else if (isSelected && !isCorrect) {
+              bubble.classList.remove("selected");
+              bubble.classList.add("incorrect");
+            } else if (!isSelected && isCorrect) {
+              bubble.classList.add("missed");
+            }
+            // else: not selected, not correct => no change
           });
-
-          // Scoring logic
-          if (q.type === "single") {
-            if (selected.length === 1 && correctAnswers.includes(selected[0])) score++;
-          } else if (q.type === "mcq") {
-            if (arraysMatch(selected, correctAnswers)) score++;
+        
+          // Scoring
+          thisScore = 0;
+          if (node.type === "single") {
+              for (let i = 0; i < node.answer.length; i++) {
+                if (selected[0] === node.answer[i]) {
+                  thisScore += node.marks;
+                  break;
+                }
+              }
+          } else if (node.type === "mcq") {
+              for (let i = 0; i < selected.length; i++) {
+                let flag = false;
+                for (let j = 0; j < node.answer.length; j++) {
+                  if (selected[i] === node.answer[j]) {
+                    flag = true;
+                    break;
+                  }
+                }
+                if (flag) {
+                  thisScore += node.marks / node.answer.length;
+                } else {
+                  thisScore -= node.marks / node.answer.length;
+                }
+              }
           }
 
-          currentQuestion++;
-          askNextQuestion();
-        }
-      }, 600);
-    }
-
-    function arraysMatch(a, b) {
-      return a.length === b.length && a.sort().join(',') === b.sort().join(',');
+          score += thisScore;
+          addSystemMessage(`📊 Score: ${thisScore}/${node.marks}`);
+          renderQuestion(node.next);
+        }, 300);
+      }, 100); // buffer delay before transition
     }
 
     window.onload = () => {
-      addMessage("👋 Hello! I'm QuizBot. Let's begin!", 'bot');
-      setTimeout(askNextQuestion, 1500);
+      addSystemMessage("🧠 Simulation started");
+      setTimeout(() => renderQuestion("start"), 800);
     };
 
     userText.addEventListener("keypress", e => {
