@@ -9,39 +9,43 @@
       font-family: "Segoe UI", sans-serif;
       background: #d6e0f0;
       margin: 0;
-      padding: 20px;
+      padding: 0;
     }
 
     .chat-container {
-      max-width: 480px;
+      width: 100%;
+      max-width: 800px;
       margin: 0 auto;
+      height: 100%;
       background: #fdfdfd;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
     }
 
     .chat-header {
       background: #e0e6f0;
-      padding: 10px 15px;
+      padding: 20px;
       font-weight: bold;
-      font-size: 1.2em;
+      font-size: 1.5em;
       border-bottom: 1px solid #ccc;
+      text-align: center;
     }
 
     .chat-box {
-      height: 400px;
+      flex: 1;
       overflow-y: auto;
-      padding: 15px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
     }
 
     .message {
       display: flex;
       align-items: flex-start;
-      max-width: 90%;
+      max-width: 100%;
+      margin-bottom: 12px;
     }
 
     .message.bot {
@@ -50,24 +54,27 @@
 
     .message.user {
       flex-direction: row-reverse;
-      margin-left: auto;
     }
 
     .avatar {
-      width: 36px;
-      height: 36px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
-      margin: 0 8px;
+      margin-right: 12px;
       object-fit: cover;
     }
 
+    .avatar.hidden {
+      visibility: hidden;
+    }
+
     .bubble {
-      padding: 10px 14px;
-      border-radius: 16px;
+      padding: 14px 20px;
+      border-radius: 20px;
       background: #e8e8e8;
-      font-size: 14px;
+      font-size: 18px;
       max-width: 80%;
-      line-height: 1.4;
+      line-height: 1.5;
     }
 
     .bot .bubble {
@@ -75,47 +82,81 @@
     }
 
     .user .bubble {
-      background: #cfe8dd;
+      background: #e4e8ec;
+    }
+
+    .bubble.correct {
+      background: #4caf50 !important;
+      color: white;
+    }
+
+    .bubble.incorrect {
+      background: #f44336 !important;
+      color: white;
+    }
+
+    .bubble.missed {
+      background: #cce5cc !important;
+      color: black;
+    }
+
+    .bubble.unselected {
+      background: #f5f5f5 !important;
+      color: black;
+    }
+
+    .mcq-response {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .mcq-response .bubble {
+      padding: 10px 16px;
+      font-size: 16px;
+      border-radius: 20px;
+      max-width: fit-content;
     }
 
     .chat-input {
       display: none;
-      padding: 10px;
+      padding: 20px;
       border-top: 1px solid #ccc;
       background: #fafafa;
       flex-direction: column;
-      gap: 8px;
+      gap: 12px;
     }
 
     #textInputArea {
       display: none;
       flex-direction: row;
-      gap: 8px;
+      gap: 12px;
       align-items: center;
     }
 
     #mcqInputArea {
       display: none;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
 
     .chat-input input[type="text"] {
       flex: 1;
-      padding: 10px 12px;
-      border-radius: 20px;
+      padding: 14px 18px;
+      border-radius: 24px;
       border: 1px solid #ccc;
-      font-size: 14px;
+      font-size: 18px;
     }
 
     .chat-input button {
-      padding: 10px 18px;
+      padding: 14px 22px;
       background: #007bff;
       color: white;
       border: none;
-      border-radius: 20px;
+      border-radius: 24px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 16px;
       white-space: nowrap;
     }
 
@@ -126,22 +167,22 @@
     .options {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
 
     .option-item {
-      background: #e9f1fa;
-      padding: 10px 14px;
-      border-radius: 12px;
+      background: #fdfdfd;
+      padding: 14px 18px;
+      border-radius: 16px;
       border: 1px solid #b3d1ef;
       cursor: pointer;
       transition: background 0.2s;
-      user-select: none;
+      font-size: 18px;
     }
 
     .option-item.selected {
-      background: #a4c7e6;
-      color: #fff;
+      background: #e4e8ec;
+      color: #000;
     }
   </style>
 </head>
@@ -172,15 +213,41 @@
     const botAvatar = "images/bellabot.png";
 
     const questions = [
+      {
+        type: "dialogue",
+        question: "Are you ready to start?",
+        options: ["Sure!", "Let me clarify my doubts"],
+        responses: {
+          "Sure!": () => { currentQuestion++; askNextQuestion(); },
+          "Let me clarify my doubts": () => {
+            addMessage("Here's some background: This quiz covers basic math (e.g., addition) and planetary facts (e.g., Mars is the Red Planet due to its iron-rich dust). Ready now?", 'bot');
+            setTimeout(() => {
+              currentQuestion = 0; // Restart dialogue
+              askNextQuestion();
+            }, 2000);
+          }
+        }
+      },
       { type: "text", question: "What's 2 + 2?", answer: "4" },
-      { type: "mcq", question: "Select all prime numbers:", options: ["2", "3", "4", "5"], answer: ["2", "3", "5"] },
-      { type: "text", question: "What is the capital of Japan?", answer: "Tokyo" }
+      {
+        type: "mcq",
+        question: "Select all prime numbers:",
+        options: ["2", "3", "4", "5"],
+        answer: ["2", "3", "5"]
+      },
+      {
+        type: "single",
+        question: "Which planet is known as the Red Planet?",
+        options: ["Earth", "Mars", "Jupiter", "Venus"],
+        answer: ["Mars"]
+      }
     ];
 
     let currentQuestion = 0;
     let score = 0;
+    let lastSender = null;
 
-    function addMessage(content, sender = 'bot') {
+    function addMessage(content, sender = 'bot', styleClass = '') {
       const msgWrapper = document.createElement('div');
       msgWrapper.className = `message ${sender}`;
 
@@ -188,8 +255,12 @@
       avatar.className = 'avatar';
       avatar.src = botAvatar;
 
+      if (sender === 'bot' && lastSender === 'bot') {
+        avatar.classList.add('hidden');
+      }
+
       const msgContent = document.createElement('div');
-      msgContent.className = 'bubble';
+      msgContent.className = `bubble ${styleClass}`;
       msgContent.innerText = content;
 
       if (sender === 'bot') msgWrapper.appendChild(avatar);
@@ -197,6 +268,9 @@
 
       chatBox.appendChild(msgWrapper);
       chatBox.scrollTop = chatBox.scrollHeight;
+      lastSender = sender;
+
+      return msgContent;
     }
 
     function askNextQuestion() {
@@ -213,28 +287,35 @@
             chatInput.style.display = "flex";
             textInputArea.style.display = "flex";
             userText.focus();
-          } else if (q.type === "mcq") {
+          } else if (q.type === "mcq" || q.type === "single" || q.type === "dialogue") {
             chatInput.style.display = "flex";
             mcqInputArea.style.display = "flex";
-            renderMCQOptions(q.options);
+            renderMCQOptions(q.options, q.type);
           }
         }, 800);
       } else {
         setTimeout(() => {
-          addMessage(`🎉 Quiz complete! Your score: ${score} / ${questions.length}`, 'bot');
+          addMessage(`🎉 Quiz complete! Your score: ${score} / ${questions.length - 1}`, 'bot');
         }, 800);
       }
     }
 
-    function renderMCQOptions(options) {
+    function renderMCQOptions(options, type) {
       mcqOptionsContainer.innerHTML = "";
       options.forEach(opt => {
         const div = document.createElement("div");
         div.className = "option-item";
         div.textContent = opt;
+
         div.addEventListener("click", () => {
-          div.classList.toggle("selected");
+          if (type === "single" || type === "dialogue") {
+            document.querySelectorAll(".option-item").forEach(el => el.classList.remove("selected"));
+            div.classList.add("selected");
+          } else {
+            div.classList.toggle("selected");
+          }
         });
+
         mcqOptionsContainer.appendChild(div);
       });
     }
@@ -243,18 +324,19 @@
       const answer = userText.value.trim();
       if (!answer) return;
 
-      addMessage(answer, 'user');
+      const userBubble = addMessage(answer, 'user');
       userText.value = "";
 
       const correctAnswer = questions[currentQuestion].answer;
-      const userAnswer = answer;
 
       setTimeout(() => {
-        if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+        chatInput.style.display = "none";
+        textInputArea.style.display = "none";
+        if (answer.toLowerCase() === correctAnswer.toLowerCase()) {
+          userBubble.classList.add("correct");
           score++;
-          addMessage("✅ Correct!", 'bot');
         } else {
-          addMessage(`❌ The correct answer was "${questions[currentQuestion].answer}".`, 'bot');
+          userBubble.classList.add("incorrect");
         }
 
         currentQuestion++;
@@ -263,32 +345,82 @@
     }
 
     function submitMCQAnswer() {
-      const selected = Array.from(document.querySelectorAll('.option-item.selected'))
-        .map(el => el.textContent.trim());
+      const selectedEls = Array.from(document.querySelectorAll('.option-item.selected'));
+      if (selectedEls.length === 0) return;
 
-      if (selected.length === 0) return;
+      const selected = selectedEls.map(el => el.textContent.trim());
+      const q = questions[currentQuestion];
 
-      addMessage(selected.join(", "), 'user');
+      // Show user-side response
+      const userMessage = document.createElement("div");
+      userMessage.className = "message user";
+      const row = document.createElement("div");
+      row.className = "mcq-response";
 
-      const correct = questions[currentQuestion].answer.slice().sort().join(",");
-      const user = selected.slice().sort().join(",");
+      if (q.type === "dialogue") {
+        // Show only the selected option for dialogue
+        selected.forEach(opt => {
+          const bubble = document.createElement("div");
+          bubble.className = "bubble";
+          bubble.textContent = opt;
+          row.appendChild(bubble);
+        });
+      } else {
+        // Show all options for mcq and single questions
+        q.options.forEach(opt => {
+          const bubble = document.createElement("div");
+          bubble.className = "bubble";
+          bubble.textContent = opt;
+          row.appendChild(bubble);
+        });
+      }
 
+      userMessage.appendChild(row);
+      chatBox.appendChild(userMessage);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Handle dialogue or quiz response
       setTimeout(() => {
-        if (user === correct) {
-          score++;
-          addMessage("✅ Correct!", 'bot');
-        } else {
-          addMessage(`❌ Correct answers were: ${questions[currentQuestion].answer.join(", ")}`, 'bot');
-        }
+        chatInput.style.display = "none";
+        mcqInputArea.style.display = "none";
 
-        currentQuestion++;
-        askNextQuestion();
+        if (q.type === "dialogue") {
+          const responseHandler = q.responses[selected[0]];
+          if (responseHandler) {
+            responseHandler();
+          }
+        } else {
+          const correctAnswers = q.answer;
+          row.childNodes.forEach(bubble => {
+            const opt = bubble.textContent.trim();
+            const isSelected = selected.includes(opt);
+            const isCorrect = correctAnswers.includes(opt);
+
+            if (isSelected && isCorrect) bubble.classList.add("correct");
+            else if (isSelected && !isCorrect) bubble.classList.add("incorrect");
+            else if (!isSelected && isCorrect) bubble.classList.add("missed");
+            else bubble.classList.add("unselected");
+          });
+
+          // Scoring logic
+          if (q.type === "single") {
+            if (selected.length === 1 && correctAnswers.includes(selected[0])) score++;
+          } else if (q.type === "mcq") {
+            if (arraysMatch(selected, correctAnswers)) score++;
+          }
+
+          currentQuestion++;
+          askNextQuestion();
+        }
       }, 600);
     }
 
-    // Init
+    function arraysMatch(a, b) {
+      return a.length === b.length && a.sort().join(',') === b.sort().join(',');
+    }
+
     window.onload = () => {
-      addMessage("👋 Hello! I'm QuizBot. Ready for a quick quiz?", 'bot');
+      addMessage("👋 Hello! I'm QuizBot. Let's begin!", 'bot');
       setTimeout(askNextQuestion, 1500);
     };
 
