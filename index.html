@@ -112,18 +112,38 @@
       background: #cce5cc;
     }
 
-    .mcq-response {
+    /* .mcq-response {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
       margin-top: 6px;
+    } */
+    .mcq-response {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center; /* center horizontally */
+      align-items: center;     /* center vertically if needed */
+      gap: 10px;
+      margin-top: 6px;
     }
 
-    .mcq-response .bubble {
+    /* .mcq-response .bubble {
       padding: 10px 16px;
       font-size: 16px;
       border-radius: 20px;
       max-width: fit-content;
+    } */
+    .mcq-response .bubble {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 10px 16px;
+      font-size: 16px;
+      border-radius: 20px;
+      white-space: nowrap;
+      flex: 0 1 auto;
+      max-width: 100%;
     }
 
     .chat-input {
@@ -136,12 +156,14 @@
       opacity: 0;
       transform: translateY(20px);
       transition: all 0.4s ease;
+      pointer-events: none;
     }
 
     .chat-input.show {
       display: flex;
       opacity: 1;
       transform: translateY(0);
+      pointer-events: auto;
     }
 
     #textInputArea {
@@ -166,12 +188,12 @@
 
     .chat-input input[type="text"] {
       flex: 1;
-      padding: 14px 18px; /* MATCH HEIGHT */
+      padding: 14px 18px;
       border-radius: 20px;
       border: 1px solid #ccc;
       font-size: 16px;
       background: #e4e8ec;
-      height: 48px; /* MATCH button */
+      height: 48px;
       box-sizing: border-box;
     }
 
@@ -183,7 +205,7 @@
       border-radius: 24px;
       cursor: pointer;
       font-size: 16px;
-      height: 48px; /* MATCH input */
+      height: 48px;
     }
 
     .chat-input button:hover {
@@ -218,6 +240,13 @@
       margin: 8px auto;
       padding: 4px 8px;
     }
+
+    .sticker-image {
+      width: 120px;
+      height: auto;
+      border-radius: 12px;
+      margin-top: 6px;
+    }
   </style>
 </head>
 <body>
@@ -231,7 +260,7 @@
       </div>
       <div id="mcqInputArea">
         <div class="options" id="mcqOptions"></div>
-        <button onclick="submitMCQAnswer()">Submit</button>
+        <button onclick="submitMCQAnswer()">Send</button>
       </div>
     </div>
   </div>
@@ -244,68 +273,42 @@
     const mcqInputArea = document.getElementById('mcqInputArea');
     const mcqOptionsContainer = document.getElementById('mcqOptions');
 
-    const botAvatar = "images/bellabot.png"; // Fallback avatar
-
-    const questions = {
-      start: {
-        id: "start",
-        type: "dialogue",
-        question: "System initialized. Would you like to start the logic sequence?",
-        options: ["Yes", "Give me details first"],
-        responses: {
-          "Yes": "q1",
-          "Give me details first": "info"
-        }
-      },
-      info: {
-        id: "info",
-        type: "dialogue",
-        question: "This simulation tests reasoning and response handling. Ready to proceed?",
-        options: ["Let’s begin", "Back"],
-        responses: {
-          "Let’s begin": "q1",
-          "Back": "start"
-        }
-      },
-      q1: {
-        id: "q1",
-        type: "text",
-        question: "Solve: \\( 3x + 6 = 15 \\). What is \\( x \\)?",
-        answer: "3",
-        marks: 1,
-        next: "q2"
-      },
-      q2: {
-        id: "q2",
-        type: "mcq",
-        question: "Select all prime numbers:",
-        options: ["2", "4", "5", "6"],
-        answer: ["2", "5"],
-        marks: 2,
-        next: "q3"
-      },
-      q3: {
-        id: "q3",
-        type: "single",
-        question: "Which planet is not known as the Red Planet?",
-        options: ["Earth", "Mars", "Saturn"],
-        answer: ["Earth", "Saturn"],
-        marks: 1,
-        next: "end"
-      },
-      end: {
-        id: "end",
-        type: "end",
-        message: () => `✅ Session complete. Final score: ${score}/${scoreTotal}`
-      }
-    };
+    const botAvatar = "images/bellabot.png";
 
     let currentNode = "start";
     let score = 0;
     let scoreTotal = 0;
     let lastSender = null;
 
-    function addMessage(content, sender = 'bot', styleClass = '') {
+    // Feature 1: Message queue
+    const messageQueue = [];
+    let processingQueue = false;
+    let isBusy = false;
+
+    function queueMessage(func) {
+      messageQueue.push(func);
+      if (!processingQueue) processNextMessage();
+    }
+
+    function processNextMessage() {
+      if (processingQueue || messageQueue.length === 0) return;
+    
+      if (isBusy) {
+        return;
+      }
+    
+      processingQueue = true;
+      const nextFunc = messageQueue.shift();
+    
+      // Ensure the function can run and then unlock
+      nextFunc();
+      processingQueue = false;
+    
+      // Continue with the next one, after a short delay
+      setTimeout(processNextMessage, 100);
+    }
+
+    function addMessage(content, sender = 'bot', styleClass = '', isImage = false) {
       const msgWrapper = document.createElement('div');
       msgWrapper.className = `message ${sender}`;
       const avatar = document.createElement('img');
@@ -314,14 +317,20 @@
 
       if (sender === 'bot' && lastSender === 'bot') avatar.classList.add('hidden');
 
-      const msgContent = document.createElement('div');
-      msgContent.className = `bubble ${styleClass}`;
-      msgContent.innerHTML = content;
-      renderMathInElement(msgContent);
+      let msgContent;
+      if (isImage) {
+        msgContent = document.createElement('img');
+        msgContent.src = content;
+        msgContent.className = `sticker-image ${styleClass}`;
+      } else {
+        msgContent = document.createElement('div');
+        msgContent.className = `bubble ${styleClass}`;
+        msgContent.innerHTML = content;
+        renderMathInElement(msgContent);
+      }
 
       if (sender === 'bot') msgWrapper.appendChild(avatar);
       msgWrapper.appendChild(msgContent);
-
       chatBox.appendChild(msgWrapper);
       chatBox.scrollTop = chatBox.scrollHeight;
       lastSender = sender;
@@ -337,49 +346,125 @@
     }
 
     function showInput(type) {
-      chatInput.classList.remove('show');
+      chatInput.style.display = 'flex';
       setTimeout(() => {
-        chatInput.style.display = 'flex';
         textInputArea.style.display = type === 'text' ? 'flex' : 'none';
         mcqInputArea.style.display = type !== 'text' ? 'flex' : 'none';
         chatInput.classList.add('show');
+        chatBox.scrollTop = chatBox.scrollHeight;
         if (type === 'text') userText.focus();
       }, 100);
     }
 
-    function renderQuestion(nodeId) {
-      chatInput.style.display = "none";
-      const node = questions[nodeId];
-      currentNode = nodeId;
-      if (!node) return;
-      if (node.type === "end") {
-        setTimeout(() => addMessage(node.message(), 'bot'), 500);
-        return;
+    const dialogueSystem = {
+      start: {
+        id: "start",
+        type: "plain",
+        content: "Meowdy!",
+        next: "start2"
+      },
+      start2: {
+        id: "start2",
+        type: "dialogue",
+        content: "System initialized. Would you like to start the logic sequence?",
+        options: ["Yes", "Give me details first"],
+        responses: {
+          "Yes": "q1",
+          "Give me details first": "info"
+        }
+      },
+      info: {
+        id: "info",
+        type: "dialogue",
+        content: "This simulation tests reasoning and response handling. Ready to proceed?",
+        options: ["Let’s begin", "Back"],
+        responses: {
+          "Let’s begin": "q1",
+          "Back": "start"
+        }
+      },
+      q1: {
+        id: "q1",
+        type: "text",
+        content: "Solve: \\( 3x + 6 = 15 \\). What is \\( x \\)?",
+        answer: "3",
+        marks: 1,
+        next: "q2"
+      },
+      q2: {
+        id: "q2",
+        type: "mcq",
+        content: "Select all prime numbers:",
+        options: ["2", "4", "5", "6"],
+        answer: ["2", "5"],
+        marks: 2,
+        responses: {
+          "4": "q2e1",
+          "6": "q2e1"
+        },
+        next: "q3"
+      },
+      q2e1: {
+        id: "q2e1",
+        type: "plain",
+        content: "4 and 6 are incorrect since they are divisible by 2!"
+      },
+      q3: {
+        id: "q3",
+        type: "single",
+        content: "Which planet is not known as the Red Planet? (choose 1)",
+        options: ["Earth", "Mars", "Saturn"],
+        answer: ["Earth", "Saturn"],
+        marks: 1,
+        next: "end"
+      },
+      end: {
+        id: "end",
+        type: "end",
+        content: `✅ Session complete.`
       }
+    };
 
+    function renderContent(nodeId) {
+      isBusy = true;
+      currentNode = nodeId;
+      chatInput.classList.remove("show");
+      
+      const node = dialogueSystem[nodeId];
+      if (!node) return;
+    
       setTimeout(() => {
-        addMessage(node.question, 'bot');
-        if (node.type === "text") {
-          scoreTotal += node.marks;
-          showInput('text');
+        chatInput.style.display = 'none';
+        addMessage(node.content, 'bot');
+      
+        if (node.type === "plain" && node.next) {
+          renderContent(node.next); // still busy
+          return;
+        }
+      
+        if (node.type === "dialogue") {
+          renderMCQOptions(node.options, "dialogue");
+          showInput('mcq');
         } else if (node.type === "mcq" || node.type === "single") {
           scoreTotal += node.marks;
           renderMCQOptions(node.options, node.type);
           showInput('mcq');
-        } else if (node.type === "dialogue") {
-          renderMCQOptions(node.options, "dialogue");
-          showInput('mcq');
+        } else if (node.type === "text") {
+          scoreTotal += node.marks;
+          showInput('text');
         }
+      
+        isBusy = false;
+        processNextMessage(); // Resume queue
       }, 500);
     }
 
     function renderMCQOptions(options, type) {
       mcqOptionsContainer.innerHTML = "";
-      options.forEach(opt => {
+      options.forEach(option => {
         const div = document.createElement("div");
         div.className = "option-item";
-        div.textContent = opt;
-
+        div.textContent = option;
         div.addEventListener("click", () => {
           if (type === "single" || type === "dialogue") {
             document.querySelectorAll(".option-item").forEach(el => el.classList.remove("selected"));
@@ -388,7 +473,6 @@
             div.classList.toggle("selected");
           }
         });
-
         mcqOptionsContainer.appendChild(div);
       });
     }
@@ -398,18 +482,18 @@
       if (!answer) return;
       const userBubble = addMessage(answer, 'user');
       userText.value = "";
-      const node = questions[currentNode];
+      const node = dialogueSystem[currentNode];
       setTimeout(() => {
+        let thisScore = 0;
         if (answer.toLowerCase() === node.answer.toLowerCase()) {
           userBubble.classList.add("correct");
           thisScore = node.marks;
         } else {
-          thisScore = 0;
           userBubble.classList.add("incorrect");
         }
         score += thisScore;
-        addSystemMessage(`📊 Score: ${thisScore}/${node.marks}`);
-        renderQuestion(node.next);
+        addSystemMessage(`📊 Score: ${round2(thisScore)}/${round2(node.marks)}`);
+        renderContent(node.next);
       }, 400);
     }
 
@@ -418,21 +502,22 @@
       if (!selectedEls.length) return;
       lastSender = 'user';
       const selected = selectedEls.map(el => el.textContent.trim());
-      const node = questions[currentNode];
+      const node = dialogueSystem[currentNode];
 
       if (node.type === "dialogue") {
         addMessage(selected[0], 'user');
-        return renderQuestion(node.responses[selected[0]]);
+        renderContent(node.responses[selected[0]]);
+        return;
       }
 
       const userMessage = document.createElement("div");
       userMessage.className = "message user";
       const row = document.createElement("div");
       row.className = "mcq-response";
-      node.options.forEach(opt => {
+      node.options.forEach(option => {
         const bubble = document.createElement("div");
         bubble.className = "bubble";
-        bubble.textContent = opt;
+        bubble.textContent = option;
         row.appendChild(bubble);
       });
       userMessage.appendChild(row);
@@ -441,69 +526,59 @@
 
       setTimeout(() => {
         row.childNodes.forEach(bubble => {
-          bubble.classList.add("bubble"); // ensure class exists
-          const opt = bubble.textContent.trim();
-          if (selected.includes(opt)) {
-            bubble.classList.add("selected"); // visual feedback before reveal
-          }
+          const option = bubble.textContent.trim();
+          if (selected.includes(option)) bubble.classList.add("selected");
         });
 
-        // Delay reveal transition
         setTimeout(() => {
+          let thisScore = 0;
+          let marksPerOption = node.marks;
+          if (node.type === "mcq") {
+            marksPerOption /= node.answer.length;
+          }
+          const shownExplanations = new Set();
+
           row.childNodes.forEach(bubble => {
-            const opt = bubble.textContent.trim();
-            const isSelected = selected.includes(opt);
-            const isCorrect = node.answer.includes(opt);
-          
-            // Transition logic
+            const option = bubble.textContent.trim();
+            const isSelected = selected.includes(option);
+            const isCorrect = node.answer.includes(option);
+
             if (isSelected && isCorrect) {
               bubble.classList.remove("selected");
               bubble.classList.add("correct");
+              thisScore += marksPerOption;
             } else if (isSelected && !isCorrect) {
               bubble.classList.remove("selected");
               bubble.classList.add("incorrect");
+              thisScore -= marksPerOption;
             } else if (!isSelected && isCorrect) {
               bubble.classList.add("missed");
             }
-            // else: not selected, not correct => no change
-          });
-        
-          // Scoring
-          thisScore = 0;
-          if (node.type === "single") {
-              for (let i = 0; i < node.answer.length; i++) {
-                if (selected[0] === node.answer[i]) {
-                  thisScore += node.marks;
-                  break;
-                }
-              }
-          } else if (node.type === "mcq") {
-              for (let i = 0; i < selected.length; i++) {
-                let flag = false;
-                for (let j = 0; j < node.answer.length; j++) {
-                  if (selected[i] === node.answer[j]) {
-                    flag = true;
-                    break;
-                  }
-                }
-                if (flag) {
-                  thisScore += node.marks / node.answer.length;
-                } else {
-                  thisScore -= node.marks / node.answer.length;
-                }
-              }
-          }
 
+            if (node.responses && isSelected && node.responses[option]) {
+              const explanation = node.responses[option];
+              if (!shownExplanations.has(explanation)) {
+                queueMessage(() => renderContent(node.responses[option]));
+                shownExplanations.add(explanation);
+              }
+            }
+          });
+
+          thisScore = Math.max(0, thisScore);
           score += thisScore;
-          addSystemMessage(`📊 Score: ${thisScore}/${node.marks}`);
-          renderQuestion(node.next);
+          addSystemMessage(`📊 Score: ${round2(thisScore)}/${round2(node.marks)}`);
+          queueMessage(() => renderContent(node.next));
         }, 300);
-      }, 100); // buffer delay before transition
+      }, 100);
+    }
+
+    function round2(val) {
+      return Math.round(val * 100) / 100;
     }
 
     window.onload = () => {
       addSystemMessage("🧠 Simulation started");
-      setTimeout(() => renderQuestion("start"), 800);
+      renderContent("start");
     };
 
     userText.addEventListener("keypress", e => {
