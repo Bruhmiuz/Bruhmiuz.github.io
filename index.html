@@ -347,13 +347,13 @@
 
     function showInput(type) {
       chatInput.style.display = 'flex';
+      textInputArea.style.display = type === 'text' ? 'flex' : 'none';
+      mcqInputArea.style.display = type !== 'text' ? 'flex' : 'none';
       setTimeout(() => {
-        textInputArea.style.display = type === 'text' ? 'flex' : 'none';
-        mcqInputArea.style.display = type !== 'text' ? 'flex' : 'none';
         chatInput.classList.add('show');
         chatBox.scrollTop = chatBox.scrollHeight;
         if (type === 'text') userText.focus();
-      }, 100);
+      }, 250);
     }
 
     const dialogueSystem = {
@@ -429,12 +429,11 @@
       isBusy = true;
       currentNode = nodeId;
       chatInput.classList.remove("show");
-      
       const node = dialogueSystem[nodeId];
       if (!node) return;
     
       setTimeout(() => {
-        chatInput.style.display = 'none';
+        chatInput.style.display = 'none'
         addMessage(node.content, 'bot');
       
         if (node.type === "plain" && node.next) {
@@ -442,20 +441,22 @@
           return;
         }
       
-        if (node.type === "dialogue") {
-          renderMCQOptions(node.options, "dialogue");
-          showInput('mcq');
-        } else if (node.type === "mcq" || node.type === "single") {
-          scoreTotal += node.marks;
-          renderMCQOptions(node.options, node.type);
-          showInput('mcq');
-        } else if (node.type === "text") {
-          scoreTotal += node.marks;
-          showInput('text');
-        }
-      
-        isBusy = false;
-        processNextMessage(); // Resume queue
+        setTimeout(() => {
+          if (node.type === "dialogue") {
+            renderMCQOptions(node.options, "dialogue");
+            showInput('mcq');
+          } else if (node.type === "mcq" || node.type === "single") {
+            scoreTotal += node.marks;
+            renderMCQOptions(node.options, node.type);
+            showInput('mcq');
+          } else if (node.type === "text") {
+            scoreTotal += node.marks;
+            showInput('text');
+          }
+        
+          isBusy = false;
+          processNextMessage(); // Resume queue
+        }, 500);
       }, 500);
     }
 
