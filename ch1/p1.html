@@ -15,30 +15,48 @@
   <style>
     body {
       font-family: "Segoe UI", sans-serif;
-      background: #d6e0f0;
+      background: white;
       margin: 0;
       padding: 0;
     }
 
     .chat-container {
-      width: 100%;
-      max-width: 800px;
-      margin: 0 auto;
+      width: 100vw;
       height: 100vh;
-      background: #fdfdfd;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      display: flex;
-      flex-direction: column;
+      border-radius: 0;
+      margin: 0;
+      max-width: unset;
+      box-shadow: none;
     }
 
     .chat-header {
       background: #e0e6f0;
-      padding: 20px;
+      padding: 20px 60px;
       font-weight: bold;
       font-size: 1.5em;
       border-bottom: 1px solid #ccc;
       text-align: center;
+      position: relative;
+    } 
+
+    .header-btn {
+      position: absolute;
+      top: 16px;
+      background: none;
+      border: none;
+      font-size: 18px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    #backToChat {
+      left: 16px;
+    }
+
+    #viewImportantBtn {
+      right: 16px;
     }
 
     .chat-box {
@@ -84,10 +102,13 @@
       max-width: 80%;
       line-height: 1.5;
       transition: background-color 0.4s ease, color 0.4s ease;
+      position: relative;
     }
 
     .bot .bubble {
       background: #f5f5f5;
+      padding-right: 28px;
+      position: relative;  
     }
 
     .user .bubble {
@@ -235,31 +256,91 @@
       border-radius: 12px;
       margin-top: 6px;
     }
+
+    .star-icon {
+      font-size: 16px;
+      position: absolute;
+      bottom: 6px;
+      right: 10px;
+      color: gray;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+    
+    .star-icon.active {
+      color: #007bff;
+    }
+
+    #importantPage {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      background: #fdfdfd;
+    }
+
+    #chatView, #importantPage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #importantList {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: #fdfdfd;
+    }
+
+    .important-message-bubble {
+      background: #f5f5f5;
+      padding: 14px 20px;
+      border-radius: 20px;
+      font-size: 16px;
+      margin-bottom: 12px;
+      position: relative;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
   <div class="chat-container">
-    <div class="chat-header">Kerfus (QuizBot)</div>
-    <div class="chat-box" id="chatBox"></div>
-    <div class="chat-input" id="chatInput">
-      <div id="textInputArea" class="chat-input-row">
-        <input type="text" id="userText" placeholder="Type your answer..." />
-        <button onclick="submitTextAnswer()">Send</button>
+    <div class="chat-header">
+      <button id="backToChat" class="header-btn" style="display:none;">🔙</button>
+      Kerfus (QuizBot)
+      <button id="viewImportantBtn" class="header-btn">⭐</button>
+    </div>
+
+    <div id="chatView">
+      <div class="chat-box" id="chatBox"></div>
+      <div class="chat-input" id="chatInput">
+        <div id="textInputArea" class="chat-input-row">
+          <input type="text" id="userText" placeholder="Type your answer..." />
+          <button onclick="submitTextAnswer()">Send</button>
+        </div>
+        <div id="mcqInputArea">
+          <div class="options" id="mcqOptions"></div>
+          <button onclick="submitMCQAnswer()">Send</button>
+        </div>
       </div>
-      <div id="mcqInputArea">
-        <div class="options" id="mcqOptions"></div>
-        <button onclick="submitMCQAnswer()">Send</button>
-      </div>
+    </div>
+
+    <div id="importantPage" style="display: none;">
+      <div id="importantList"></div>
     </div>
   </div>
 
   <script>
+    const chatContainer = document.querySelector('.chat-container');
     const chatBox = document.getElementById('chatBox');
     const chatInput = document.getElementById('chatInput');
     const userText = document.getElementById('userText');
     const textInputArea = document.getElementById('textInputArea');
     const mcqInputArea = document.getElementById('mcqInputArea');
     const mcqOptionsContainer = document.getElementById('mcqOptions');
+    const importantPage = document.getElementById('importantPage');
+    const importantList = document.getElementById('importantList');
+    const viewImportantBtn = document.getElementById('viewImportantBtn');
+    const backToChatBtn = document.getElementById('backToChat');
 
     const botAvatar = "../images/bellabot.png";
 
@@ -272,6 +353,9 @@
     const messageQueue = [];
     let processingQueue = false;
     let isBusy = false;
+
+    const messageHistory = []; // All bot messages in order (no duplicates)
+    const importantMessages = new Set(); // Use Set to track starred contents
 
     function queueMessage(func) {
       messageQueue.push(func);
@@ -302,9 +386,9 @@
       const avatar = document.createElement('img');
       avatar.className = 'avatar';
       avatar.src = botAvatar;
-
+        
       if (sender === 'bot' && lastSender === 'bot') avatar.classList.add('hidden');
-
+        
       let msgContent;
       if (isImage) {
         msgContent = document.createElement('img');
@@ -316,7 +400,36 @@
         msgContent.innerHTML = content;
         renderMathInElement(msgContent);
       }
+    
+      if (sender === 'bot') {
+        const key = content.trim();
 
+        // Track message once in history
+        if (!messageHistory.includes(key)) {
+          messageHistory.push(key);
+        }
+      
+        const star = document.createElement('span');
+        star.textContent = '★';
+        star.className = 'star-icon';
+        if (importantMessages.has(key) || dialogueSystem[currentNode]?.important) {
+          star.classList.add('active');
+          importantMessages.add(key);
+        }
+      
+        star.addEventListener('click', () => {
+          if (importantMessages.has(key)) {
+            importantMessages.delete(key);
+            star.classList.remove('active');
+          } else {
+            importantMessages.add(key);
+            star.classList.add('active');
+          }
+        });
+      
+        msgContent.appendChild(star);
+      }
+    
       if (sender === 'bot') msgWrapper.appendChild(avatar);
       msgWrapper.appendChild(msgContent);
       chatBox.appendChild(msgWrapper);
@@ -615,7 +728,7 @@
           queueMessage(() => renderContent(node.next));
         }, 300);
       }, 100);
-}
+    }
 
     function round2(val) {
       return Math.round(val * 100) / 100;
@@ -628,6 +741,29 @@
 
     userText.addEventListener("keypress", e => {
       if (e.key === "Enter") submitTextAnswer();
+    });
+
+    viewImportantBtn.addEventListener('click', () => {
+      importantList.innerHTML = '';
+      importantMessages.forEach(({ content }) => {
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble bot';  // preserve styling
+        bubble.innerHTML = content;
+        renderMathInElement(bubble);
+        importantList.appendChild(bubble);
+      });
+    
+      document.getElementById('chatView').style.display = 'none';
+      document.getElementById('importantPage').style.display = 'flex';
+      backToChatBtn.style.display = 'inline-block';
+      viewImportantBtn.stye.display = 'none';
+    });
+
+    backToChatBtn.addEventListener('click', () => {
+      document.getElementById('importantPage').style.display = 'none';
+      document.getElementById('chatView').style.display = 'flex';
+      backToChatBtn.style.display = 'none';
+      viewImportantBtn.style.display = 'inline-block';
     });
   </script>
 </body>
