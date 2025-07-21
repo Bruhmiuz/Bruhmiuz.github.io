@@ -184,6 +184,7 @@ function renderContent(nodeId, dialogueSystem) {
       addMessage(node.content, 'bot');
     }
 
+    chatInput.style.display = 'none';
     const delay = (node.delay ?? -500) + 500;
 
     if ((node.type === "plain" || node.type === "image") && node.next) {

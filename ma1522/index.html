@@ -50,7 +50,7 @@
   <script>
     // Load quiz based on URL parameter
     const urlParams = new URLSearchParams(window.location.search);
-    const quizName = urlParams.get('content') || 'ch1-1';
+    const quizName = urlParams.get('content') || 'demo';
     const quizScript = document.createElement('script');
     quizScript.src = `scripts/content/${quizName}.js`;
     quizScript.onload = () => {
