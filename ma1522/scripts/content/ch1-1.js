@@ -1,50 +1,51 @@
 /*
-Each message should contain:
-1. type (1 of 6 options)
-  - Plain text - "plain"
-  - Plain image - "image"
-  - Dialogue option - "dialogue"
-  - Multi-select MCQ - "mcq"
-  - Single-select MCQ - "single-mcq"
-  - Text based question - "text"
-  
-- content
-  - All except image: Text to be displayed in the message
-  - Image: location of image in images folder
+Each message node in the dialogue system must include a defined structure to ensure consistent behavior and rendering.
 
-- next (all except "dialogue")
-  - the next message 
-  - for MCQs, the message that comes next after adressing chosen options
-  - compulsory for all nodes, except:
-    - dialogue messages (refer to respondToIdx)
-    - final message
-    - response message for MCQ
+Required and Optional Fields:
 
-- delay 
-  - additional delay on top of 500 ms
-  - optional
+1. type (string) — One of the following six message types:
+   - "plain"        → Standard text message.
+   - "image"        → Image message (loads from the `images/` folder).
+   - "dialogue"     → Dialogue-based user options.
+   - "mcq"          → Multiple-select MCQ (can select more than one).
+   - "single-mcq"   → Single-select MCQ (only one correct option).
+   - "text"         → Open-ended text input.
 
-- options ("dialogue", "mcq", "single-mcq")
-  - contains text for dialogue/mcq options
+2. content (string)
+   - For all types except "image": The message text (can include LaTeX).
+   - For "image": Filename of the image (relative to the `images/` folder).
 
-- answersIdx ("mcq", "single-mcq")
-  - contains correct answers for MCQ
+3. next (string) — [Required for all types except "dialogue"]
+   - ID of the next node to load after this one.
+   - For MCQ types, this is triggered after optional feedback responses (see `respondToIdx`).
+   - Not required for:
+     - "dialogue" nodes (use `respondToIdx` instead),
+     - final message nodes,
+     - intermediate response messages.
 
-- respondToIdx ("dialogue", "mcq", "single-mcq")
-  - for dialogue (compulsory):
-    - details the next message for the selected option
-  - for MCQ (optional):
-    - contains the plain/image message sent in response to picking a certain option
+4. delay (number) — [Optional]
+   - Additional delay in milliseconds before showing this node (defaults to 500ms base delay).
 
-- answers ("text")
-  - contains the correct text answers to the question
+5. options (object) — [Required for "dialogue", "mcq", and "single-mcq"]
+   - A dictionary mapping option keys (typically numbers) to display labels.
 
-- marks ("mcq", "single-mcq", "text")
-  - marks allocated for MCQ and text based questions
-  - optional
+6. answersIdx (Set<number>) — [Required for "mcq" and "single-mcq"]
+   - A `Set` containing the keys of correct answers.
 
+7. respondToIdx (object) — [Required for "dialogue", optional for "mcq"/"single-mcq"]
+   - A mapping of selected option keys to follow-up node IDs.
+   - For "dialogue", this is mandatory and determines branching.
+   - For MCQ types, it optionally provides feedback nodes for selected options.
+
+8. answers (Set<string>) — [Required for "text"]
+   - A set of accepted correct text answers (case- and space-insensitive matching is applied).
+
+9. marks (number) — [Optional for "mcq", "single-mcq", and "text"]
+   - Maximum score awarded for correctly answering the node.
+   - Scoring is skipped if this is undefined.
 
 */
+
 
 const dialogueSystem = {
   start: {
