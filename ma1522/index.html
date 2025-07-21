@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuizBot</title>
+  <!-- KaTeX for LaTeX rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '\\(', right: '\\)', display: false }] });">
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <button id="backToChat" class="header-btn" style="display:none;">🔙</button>
+      <span id="chatTitle">Kerfus</span>
+      <button id="viewImportantBtn" class="header-btn">⭐</button>
+    </div>
+
+    <div class="chat-body">
+      <div id="chatView" class="active">
+        <div class="chat-box" id="chatBox"></div>
+        <div class="chat-input" id="chatInput">
+          <div id="textInputArea" class="chat-input-row">
+            <input type="text" id="userText" placeholder="Type your answer..." />
+            <button onclick="submitTextAnswer(dialogueSystem)">Send</button>
+          </div>
+          <div id="mcqInputArea">
+            <div class="options" id="mcqOptions"></div>
+            <button onclick="submitMCQAnswer(dialogueSystem)">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="importantPage" class="hidden-right">
+        <div id="importantList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="imageModal" class="image-modal">
+    <span id="closeImageModal" class="image-modal-close">&times;</span>
+    <img class="image-modal-content" id="zoomedImage" />
+  </div>
+
+  <script src="scripts/main.js"></script>
+  <script>
+    // Load quiz based on URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const quizName = urlParams.get('content') || 'ch1-1';
+    const quizScript = document.createElement('script');
+    quizScript.src = `scripts/content/${quizName}.js`;
+    quizScript.onload = () => {
+      initializeQuiz(dialogueSystem); // Initialize with loaded dialogueSystem
+    };
+    quizScript.onerror = () => {
+      addSystemMessage('Error: Could not load quiz data.');
+    };
+    document.body.appendChild(quizScript);
+  </script>
+</body>
+</html>
