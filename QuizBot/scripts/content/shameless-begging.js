@@ -3,7 +3,8 @@ const dialogueSystem = {
     type: "image",
     content: "images/cipher_pitiful.png",
     sticker: true,
-    next: "p1"
+    next: "p1",
+    delay: 1000
   },
 
   p1: {
@@ -18,20 +19,23 @@ const dialogueSystem = {
       0: "d0",
       1: "d1",
       2: "d2"
-    }
+    },
+    delay: 1000
   },
 
   d0: {
     type: "plain",
     content: "Yes I do.",
     systemMessage: "Telegram: @bruhmius",
-    next: "p1"
+    next: "p1",
+    delay: 1000
   },
 
   d1: {
     type: "image",
     content: "images/virus_idk.webp",
-    next: "d1a"
+    next: "d1a",
+    delay: 1000
   },
 
   d1a: {
@@ -44,13 +48,15 @@ const dialogueSystem = {
     respondToIdx: {
       0: "d1b",
       1: "d1c",
-    }
+    },
+    delay: 1000
   },
 
   d1b: {
     type: "plain",
     content: "Yayzers!",
-    next: "p1"
+    next: "p1",
+    delay: 1000
   },
 
   d1c: {
@@ -64,7 +70,8 @@ const dialogueSystem = {
   d2: {
     type: "plain",
     content: "It's QuizBot, a tool forked form nus-ma1522/QuizBot.<br>Anyone may use it for personal purposes.",
-    next: "p1"
+    next: "p1",
+    delay: 1000
   },
 
 };
