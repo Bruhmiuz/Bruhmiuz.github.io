@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>QuizBot</title>
+  <!-- KaTeX for LaTeX rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, { delimiters: [
+      { left: '$$', right: '$$', display: true },
+      { left: '\\[', right: '\\]', display: true },
+      { left: '$', right: '$', display: false },
+      { left: '\\(', right: '\\)', display: false }] 
+    });">
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="checkpointSelector">
+    <div id="selectorTitle">Choose Start Point</div>
+    <div id="checkpointButtons"></div>
+  </div>
+
+  <div id="chatContainer" style="display: none;">
+    <div id="chatHeader">
+      <button id="backToChat" class="header-btn" style="display:none;">🔙</button>
+      <span id="chatTitle">Kerfus</span>
+      <button id="viewImportant" class="header-btn">⭐</button>
+    </div>
+
+    <div id="chatBody">
+      <div id="chatView" class="active">
+        <div id="chatBox"></div>
+        <div id="chatInputContainer">
+          <div id="toggleInputBtn">
+            <div id="toggleArrow">^</div>
+          </div>
+        
+          <div id="chatInput">
+            <div id="textInputArea">
+              <input type="text" id="userText" placeholder="Type your answer..." />
+              <button onclick="submitTextAnswer()">Send</button>
+            </div>
+          
+            <div id="mcqInputArea">
+              <div class="options" id="mcqOptions"></div>
+              <button onclick="submitMCQAnswer()">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="importantPage" class="hidden-right">
+        <div id="importantList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal">
+    <span id="closeModal">&times;</span>
+    <div id="modalContent">
+    </div>
+  </div>
+
+  <script src="scripts/main.js"></script>
+  <script>
+
+    /*
+    Valid quiz names must match one of the following patterns:
+    - "demo"
+    - "ch<number>-<number>" where <number> is one or more digits
+    - Only alphanumeric characters as a suffix
+    */
+    // const quizWhitelistRegexes = [
+    //   /^demo$/,
+    //   /^ch(\d+)-(\d+)[a-zA-Z0-9]*$/,
+    // ];
+
+    // Load quiz based on URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+
+    const quizName = urlParams.get('content') || 'demo';
+    const quizScript = document.createElement('script');
+
+    // Reduce attack surface by sanitizing & validating the quiz name
+    // If quiz name does not match any of the patterns, redirect to error page
+    // const sanitizedQuizName = quizWhitelistRegexes.some(regex => regex.test(quizName)) ? quizName : 'pathResolveError';
+
+    quizScript.src = `scripts/content/${sanitizedQuizName}.js`;
+    quizScript.onload = () => {
+      setTimeout(() => {
+        initializeQuiz(); // Ensure renderMathInElement is loaded
+      }, 100); 
+    };
+    quizScript.onerror = () => {
+      addSystemMessage('Error: Could not load quiz data.');
+    };
+    document.body.appendChild(quizScript);
+  </script>
+</body>
+</html>
