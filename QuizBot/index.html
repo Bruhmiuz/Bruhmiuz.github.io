@@ -88,7 +88,7 @@
     // If quiz name does not match any of the patterns, redirect to error page
     // const sanitizedQuizName = quizWhitelistRegexes.some(regex => regex.test(quizName)) ? quizName : 'pathResolveError';
 
-    quizScript.src = `scripts/content/${sanitizedQuizName}.js`;
+    quizScript.src = `scripts/content/${quizName}.js`;
     quizScript.onload = () => {
       setTimeout(() => {
         initializeQuiz(); // Ensure renderMathInElement is loaded
