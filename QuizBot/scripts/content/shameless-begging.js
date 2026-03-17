@@ -4,7 +4,7 @@ const dialogueSystem = {
     content: "images/cipher_pitiful.png",
     sticker: true,
     next: "p1",
-    delay: 1000
+    delay: 2000
   },
 
   p1: {
@@ -28,14 +28,14 @@ const dialogueSystem = {
     content: "YESSS ME NEEEED!",
     systemMessage: "Telegram: @bruhmius",
     next: "p1",
-    delay: 1000
+    delay: 3000
   },
 
   d1: {
     type: "image",
     content: "images/virus_idk.webp",
     next: "d1a",
-    delay: 1000
+    delay: 4000
   },
 
   d1a: {
@@ -56,7 +56,7 @@ const dialogueSystem = {
     type: "plain",
     content: "Yayzers!",
     next: "p1",
-    delay: 1000
+    delay: 2000
   },
 
   d1c: {
@@ -64,14 +64,15 @@ const dialogueSystem = {
     content: "images/loading.gif",
     sticker: true,
     systemMessage: "Connection issue. Failed to receive.",
-    next: "p1"
+    next: "p1",
+    delay: 5000
   },
 
   d2: {
     type: "plain",
     content: "It's QuizBot, a tool forked form nus-ma1522/QuizBot.<br>Anyone may use it for personal purposes.",
     next: "p1",
-    delay: 1000
+    delay: 4000
   },
 
 };
