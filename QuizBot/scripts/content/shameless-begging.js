@@ -25,7 +25,7 @@ const dialogueSystem = {
 
   d0: {
     type: "plain",
-    content: "Yes I do.",
+    content: "YESSS ME NEEEED!",
     systemMessage: "Telegram: @bruhmius",
     next: "p1",
     delay: 1000
