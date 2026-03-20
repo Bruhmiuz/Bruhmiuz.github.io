@@ -1,24 +1,18 @@
 const dialogueSystem = {
-  p0: {
-    type: "image",
-    content: "images/cipher_pitiful.png",
-    sticker: true,
-    next: "p1",
-    delay: 2000
-  },
-
   p1: {
     type: "dialogue",
     content: "Now what?!?",
     options: {
       0: "Do you still need a teammate?",
       1: "Send meme.",
-      2: "What is this thing?"
+      2: "What is this thing?",
+      3: "How is progress?"
     },
     respondToIdx: {
       0: "d0",
       1: "d1",
-      2: "d2"
+      2: "d2",
+      3: "d3"
     },
     delay: 1000
   },
@@ -75,6 +69,21 @@ const dialogueSystem = {
     delay: 4000
   },
 
+  d3: {
+    type: "plain",
+    content: "Hopefully I can finish the sequential verion by Monday and the CUDA version by Tuesday!",
+    next: "p0",
+    delay: 3000
+  },
+
+  p0: {
+    type: "image",
+    content: "images/cipher_pitiful.png",
+    sticker: true,
+    next: "p1",
+    delay: 2000
+  },
+
 };
 
 const compulsoryMessages = [
@@ -83,7 +92,7 @@ const compulsoryMessages = [
 const checkpoints = [
   {
     id: "p0",
-    label: "Looking for teammate?",
+    label: "Looking for teammate? (still available) [**IN URGENT NEED**]",
     showCompulsoryMessages: 0
   },
 ];
